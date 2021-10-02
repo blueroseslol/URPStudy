@@ -1,15 +1,16 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class CameraRenderer
+public partial class CameraRenderer
 {
     ScriptableRenderContext context;
     Camera camera;
     CullingResults cullingResults;
 
-    private static ShaderTagId unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
     const string bufferName = "Render Camera";
     private CommandBuffer buffer = new CommandBuffer {name = bufferName};
+
+    private static ShaderTagId unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
 
     public void Render(ScriptableRenderContext context,Camera camera)
     {
@@ -23,6 +24,7 @@ public class CameraRenderer
 
         Setup();   
         DrawVisibleGeometry();
+        DrawUnsupportedShaders();
         Submit();
     }
 
@@ -49,11 +51,16 @@ public class CameraRenderer
     {
         var sortingSettings = new SortingSettings(camera){criteria = SortingCriteria.CommonOpaque};
         var drawingSettings = new DrawingSettings(unlitShaderTagId,sortingSettings);
-        var filteringSettings = new FilteringSettings(RenderQueueRange.all);
+        var filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
         
         context.DrawRenderers(cullingResults,ref drawingSettings,ref filteringSettings);
-        
         context.DrawSkybox(camera);
+    
+        sortingSettings.criteria=SortingCriteria.CommonTransparent;
+        drawingSettings.sortingSettings=sortingSettings;
+        filteringSettings.renderQueueRange=RenderQueueRange.transparent;
+
+        context.DrawRenderers(cullingResults,ref drawingSettings,ref filteringSettings);
     }
 
     void Submit()
@@ -68,4 +75,6 @@ public class CameraRenderer
         context.ExecuteCommandBuffer(buffer);
         buffer.Clear();
     }
+
+
 }

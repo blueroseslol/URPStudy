@@ -9,6 +9,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 361514ae1c555934184a2c1dc47d433f, type: 3}
+  m_Script: {fileID: 11500000, guid: 54b1e5032464470469a2a9ac2348c783, type: 3}
   m_Name: Custom RP
   m_EditorClassIdentifier: 
