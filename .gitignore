@@ -4,3 +4,6 @@ Library/
 Temp/
 Logs/
 *.csproj
+.idea/
+obj/
+*.user

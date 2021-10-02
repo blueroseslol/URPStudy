@@ -16,7 +16,8 @@ public partial class CameraRenderer
     {
         this.context=context;
         this.camera=camera;
-
+        PrepareBuffer();
+        PrepareForSceneWindow();
         if (!Cull())
         {
             return;
@@ -25,6 +26,7 @@ public partial class CameraRenderer
         Setup();   
         DrawVisibleGeometry();
         DrawUnsupportedShaders();
+        DrawGizmos();
         Submit();
     }
 
@@ -42,8 +44,9 @@ public partial class CameraRenderer
     void Setup()
     {
         context.SetupCameraProperties(camera);
-        buffer.BeginSample(bufferName);
-        buffer.ClearRenderTarget(true,true,Color.clear);
+        CameraClearFlags flags = camera.clearFlags;
+        buffer.BeginSample(SampleName);
+        buffer.ClearRenderTarget(flags<=CameraClearFlags.Depth,flags==CameraClearFlags.Color,flags==CameraClearFlags.Color ? camera.backgroundColor.linear:Color.clear);
         ExecuteBuffer();
     }
 
@@ -65,7 +68,7 @@ public partial class CameraRenderer
 
     void Submit()
     {
-        buffer.EndSample(bufferName);
+        buffer.EndSample(SampleName);
         ExecuteBuffer();
         context.Submit();
     }
