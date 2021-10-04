@@ -3,6 +3,7 @@ Shader "Custom RP/Unlit"
     Properties
     {
         _BaseColor("Color",Color)=(1.0,1.0,1.0,1.0)
+        _Cutoff("Alpha Cutoff",Range(0.0,1.0))=0.5
         
         [Enum(UnityEngine.Rendering.BlendMode)]
         _SrcBlend("Src Blend",Float)=1
