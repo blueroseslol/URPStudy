@@ -24,7 +24,7 @@ public class Lighting {
 	CullingResults cullingResults;
 
 	public void Setup (
-		ScriptableRenderContext context, CullingResults cullingResults
+		ScriptableRenderContext context, CullingResults cullingResults,ShadowSettings shadowSettings
 	) {
 		this.cullingResults = cullingResults;
 		buffer.BeginSample(bufferName);
