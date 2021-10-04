@@ -1,7 +1,8 @@
-#ifndef CUSTOM_COMMON_INCLUDE
-#define CUSTOM_COMMON_INCLUDE
+﻿#ifndef CUSTOM_COMMON_INCLUDED
+#define CUSTOM_COMMON_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
 #include "UnityInput.hlsl"
 
 #define UNITY_MATRIX_M unity_ObjectToWorld
@@ -12,5 +13,9 @@
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/SpaceTransforms.hlsl"
+
+float Square (float x) {
+	return x * x;
+}
 
 #endif
