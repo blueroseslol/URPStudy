@@ -4,14 +4,16 @@ Shader "Custom RP/Unlit"
     {
         _BaseColor("Color",Color)=(1.0,1.0,1.0,1.0)
         
-        [Enum(UnityEngine.Rendering.BlendedMode)]
+        [Enum(UnityEngine.Rendering.BlendMode)]
         _SrcBlend("Src Blend",Float)=1
         
-        [Enum(UnityEngine.Rendering.BlendedMode)]
-        _DstBlend("Src Blend",Float)=0
+        [Enum(UnityEngine.Rendering.BlendMode)]
+        _DstBlend("Dst Blend",Float)=0
         
         [Enum(Off,0,On,1)] 
         _ZWrite ("Z Write",Float)=1
+        
+        _BaseMap("Texture",2D)="white" {}
     }
     SubShader
     {
