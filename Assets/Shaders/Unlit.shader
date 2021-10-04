@@ -4,6 +4,7 @@ Shader "Custom RP/Unlit"
     {
         _BaseColor("Color",Color)=(1.0,1.0,1.0,1.0)
         _Cutoff("Alpha Cutoff",Range(0.0,1.0))=0.5
+        [Toggle(_CLIPPING)] _Clipping("Alpha Clipping",Float)=0
         
         [Enum(UnityEngine.Rendering.BlendMode)]
         _SrcBlend("Src Blend",Float)=1
@@ -25,6 +26,7 @@ Shader "Custom RP/Unlit"
            
            HLSLPROGRAM
 
+           #pragma  shader_feature _CLIPPING
            #pragma multi_compile_instancing
            #pragma vertex UnlitPassVertex
            #pragma fragment UnlitPassFragment
