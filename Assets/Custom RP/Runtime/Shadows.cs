@@ -7,8 +7,13 @@ public class Shadows
     int ShadowedDirectionalLightCount;
     const string bufferName = "shadows";
 
-    static int dirShadowAtlasId = Shader.PropertyToID("_DirectionalShadowAtlas"),
-        dirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices");
+    private static int dirShadowAtlasId = Shader.PropertyToID("_DirectionalShadowAtlas"),
+        dirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices"),
+        cascadeCountId = Shader.PropertyToID("_CascadeCount"),
+        cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres"),
+        shadowDistanceId = Shader.PropertyToID("_ShadowDistance");
+
+    private static Vector4[] cascadeCullingSpheres = new Vector4[maxCascades];
 
     private static Matrix4x4[] dirShadowMatrices = new Matrix4x4[maxShadowedDirectionalLightCount*maxCascades ];
 
@@ -70,7 +75,11 @@ public class Shadows
         {
             RenderDirectionalShadows(i, split,tileSize);
         }
+        //向Shader传递数据
+        buffer.SetGlobalInt(cascadeCountId,settings.directional.cascadeCount);
+        buffer.SetGlobalVectorArray(cascadeCullingSpheresId,cascadeCullingSpheres);
         buffer.SetGlobalMatrixArray(dirShadowMatricesId,dirShadowMatrices);
+        buffer.SetGlobalFloat(shadowDistanceId,settings.maxDistance);
         buffer.EndSample(bufferName);
         ExecuteBuffer();
     }
@@ -93,6 +102,15 @@ public class Shadows
                 light.visibleLightIndex, i, cascadeCount, ratios, tileSize, 0f,
                 out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData splitData);
             shadowSettings.splitData = splitData;
+            //因为剔除球都是等效的，所以只需要在循环的第一次计算即可。
+            if (index == 0)
+            {
+                //我们需要着色器中的球体来检查表面碎片是否位于其中，这可以通过将距球体中心的平方距离与其半径进行比较来实现。因此，让我们存储平方半径，这样就不必在着色器中计算它了。
+                Vector4 cullingSphere = splitData.cullingSphere;
+                cullingSphere.w *= cullingSphere.w;
+                cascadeCullingSpheres[i] = cullingSphere;
+            }
+
             int tileIndex = tileOffset + i;
             
             //存储 世界空间=》方向光空间矩阵
