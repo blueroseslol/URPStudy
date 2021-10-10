@@ -75,11 +75,16 @@ public class Shadows
         {
             RenderDirectionalShadows(i, split,tileSize);
         }
+
+        float f = 1f - settings.directional.cascadeFade;
         //向Shader传递数据
         buffer.SetGlobalInt(cascadeCountId,settings.directional.cascadeCount);
         buffer.SetGlobalVectorArray(cascadeCullingSpheresId,cascadeCullingSpheres);
         buffer.SetGlobalMatrixArray(dirShadowMatricesId,dirShadowMatrices);
-        buffer.SetGlobalVector(shadowDistanceFadeId,new Vector4(1f/settings.maxDistance,1f/settings.distanceFade));
+        buffer.SetGlobalVector(shadowDistanceFadeId,new Vector4(
+            1f/settings.maxDistance,
+            1f/settings.distanceFade,
+            1f/(1f-f*f)));
         buffer.EndSample(bufferName);
         ExecuteBuffer();
     }
