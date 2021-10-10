@@ -11,9 +11,11 @@ public class Shadows
         dirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices"),
         cascadeCountId = Shader.PropertyToID("_CascadeCount"),
         cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres"),
+        casadeDataId = Shader.PropertyToID("_CascadeData"),
         shadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
 
-    private static Vector4[] cascadeCullingSpheres = new Vector4[maxCascades];
+    private static Vector4[] cascadeCullingSpheres = new Vector4[maxCascades],
+        cascadeData = new Vector4[maxCascades];
 
     private static Matrix4x4[] dirShadowMatrices = new Matrix4x4[maxShadowedDirectionalLightCount*maxCascades ];
 
@@ -80,6 +82,7 @@ public class Shadows
         //向Shader传递数据
         buffer.SetGlobalInt(cascadeCountId,settings.directional.cascadeCount);
         buffer.SetGlobalVectorArray(cascadeCullingSpheresId,cascadeCullingSpheres);
+        buffer.SetGlobalVectorArray(casadeDataId,cascadeData);
         buffer.SetGlobalMatrixArray(dirShadowMatricesId,dirShadowMatrices);
         buffer.SetGlobalVector(shadowDistanceFadeId,new Vector4(
             1f/settings.maxDistance,
@@ -111,9 +114,7 @@ public class Shadows
             if (index == 0)
             {
                 //我们需要着色器中的球体来检查表面碎片是否位于其中，这可以通过将距球体中心的平方距离与其半径进行比较来实现。因此，让我们存储平方半径，这样就不必在着色器中计算它了。
-                Vector4 cullingSphere = splitData.cullingSphere;
-                cullingSphere.w *= cullingSphere.w;
-                cascadeCullingSpheres[i] = cullingSphere;
+                SetCascadeData(i, splitData.cullingSphere, tileSize);
             }
 
             int tileIndex = tileOffset + i;
@@ -123,9 +124,22 @@ public class Shadows
                 projectionMatrix * viewMatrix, 
                 SetTileViewport(tileIndex, split, tileSize),split);
             buffer.SetViewProjectionMatrices(viewMatrix,projectionMatrix);
+            //通过添加偏移来消除摩尔纹
+            // buffer.SetGlobalDepthBias(0,3f);
             ExecuteBuffer();
             context.DrawShadows(ref shadowSettings);
+            //绘制阴影后恢复
+            // buffer.SetGlobalDepthBias(0f,0f);
         }
+    }
+
+    void SetCascadeData(int index, Vector4 cullingSphere, float tileSize)
+    {
+        float texelSize = 2f * cullingSphere.w / tileSize;
+        cullingSphere.w *= cullingSphere.w;
+        cascadeData[index] = new Vector4(
+            1f / cullingSphere.w, 
+            texelSize*1.4142136f);
     }
 
     Matrix4x4 ConvertToAtlasMatrix (Matrix4x4 m, Vector2 offset, int split) {
