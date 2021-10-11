@@ -33,6 +33,8 @@ public class Shadows
     struct ShadowedDirectionalLight
     {
         public int visibleLightIndex;
+        public float slopeScaleBiase;
+        public float nearPlaneOffset;
     }
 
     private ShadowedDirectionalLight[] ShadowedDirectionalLights =
@@ -107,7 +109,7 @@ public class Shadows
             //通过ComputeDirectionalShadowMatricesAndCullingPrimitives计算:视图矩阵、投影矩阵与ShadowSplitData结构
             //第一个参数是可见光指数。接下来的三个参数是两个整数和一个Vector3，它们控制阴影级联。稍后我们将处理级联，因此现在使用零，一和零向量。然后是纹理尺寸，我们需要使用平铺尺寸。第六个参数是靠近平面的阴影，我们现在将其忽略并将其设置为零。
             cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(
-                light.visibleLightIndex, i, cascadeCount, ratios, tileSize, 0f,
+                light.visibleLightIndex, i, cascadeCount, ratios, tileSize, light.nearPlaneOffset,
                 out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData splitData);
             shadowSettings.splitData = splitData;
             //因为剔除球都是等效的，所以只需要在循环的第一次计算即可。
@@ -125,11 +127,11 @@ public class Shadows
                 SetTileViewport(tileIndex, split, tileSize),split);
             buffer.SetViewProjectionMatrices(viewMatrix,projectionMatrix);
             //通过添加偏移来消除摩尔纹
-            // buffer.SetGlobalDepthBias(0,3f);
+            buffer.SetGlobalDepthBias(0,light.slopeScaleBiase);
             ExecuteBuffer();
             context.DrawShadows(ref shadowSettings);
             //绘制阴影后恢复
-            // buffer.SetGlobalDepthBias(0f,0f);
+            buffer.SetGlobalDepthBias(0f,0f);
         }
     }
 
@@ -191,15 +193,21 @@ public class Shadows
         buffer.Clear();
     }
 
-    public Vector2 ReserveDirectionalShadows(Light light, int visibleLightIndex)
+    public Vector3 ReserveDirectionalShadows(Light light, int visibleLightIndex)
     {
         if (ShadowedDirectionalLightCount < maxShadowedDirectionalLightCount &&
             light.shadows!=LightShadows.None && light.shadowStrength>0f && 
             cullingResults.GetShadowCasterBounds(visibleLightIndex,out Bounds b)) 
         {
-            ShadowedDirectionalLights[ShadowedDirectionalLightCount] = new ShadowedDirectionalLight() { visibleLightIndex = visibleLightIndex};
-            return new Vector2(light.shadowStrength, settings.directional.cascadeCount * ShadowedDirectionalLightCount++);
+            ShadowedDirectionalLights[ShadowedDirectionalLightCount] = new ShadowedDirectionalLight()
+            {
+                visibleLightIndex = visibleLightIndex,
+                slopeScaleBiase = light.shadowBias,
+                nearPlaneOffset = light.shadowNearPlane
+            };
+            return new Vector3(light.shadowStrength, settings.directional.cascadeCount * ShadowedDirectionalLightCount++,
+                light.shadowNormalBias);
         }
-        return Vector2.zero;
+        return Vector3.zero;
     }
 }

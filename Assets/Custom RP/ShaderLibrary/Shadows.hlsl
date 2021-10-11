@@ -8,6 +8,7 @@ struct DirectionalShadowData
 {
 	float strength;
 	int tileIndex;
+	float normalBias;
 };
 
 TEXTURE2D_SHADOW(_DirectionalShadowAtlas);
@@ -74,7 +75,7 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional,ShadowDa
 	{
 		return 1.0;
 	}
-	float3 normalBias=surfaceWS.normal*_CascadeData[global.cascadeIndex].y;
+	float3 normalBias=surfaceWS.normal*(directional.normalBias*_CascadeData[global.cascadeIndex].y);
 	float3 positionSTS=mul(_DirectionalShadowMatrices[directional.tileIndex],float4(surfaceWS.position+normalBias,1.0)).xyz;
 	float shadow=SampleDirectionalShadowAtlas(positionSTS);
 	return lerp(1.0,shadow,directional.strength);
