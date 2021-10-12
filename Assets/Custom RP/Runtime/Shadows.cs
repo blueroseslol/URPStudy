@@ -22,6 +22,12 @@ public class Shadows
         "_DIRECTIONAL_PCF7"
     };
 
+    private static string[] cascadeBlendKeywords =
+    {
+        "_CASCADE_BLEND_SOFT",
+        "_CASCADE_BLEND_DITHER"
+    };
+
     private static Vector4[] cascadeCullingSpheres = new Vector4[maxCascades],
         cascadeData = new Vector4[maxCascades];
 
@@ -98,25 +104,25 @@ public class Shadows
             1f/settings.maxDistance,
             1f/settings.distanceFade,
             1f/(1f-f*f)));
-        SetDirectionalKeywords();
+        SetKeywords(directionalFilterKeywords,(int)settings.directional.filter-1);
+        SetKeywords(cascadeBlendKeywords,(int)settings.directional.cascadeBlend-1);
         buffer.SetGlobalVector(shadowAtlastSizeId,
             new Vector4(atlasSize,1f/atlasSize));
         buffer.EndSample(bufferName);
         ExecuteBuffer();
     }
 
-    void SetDirectionalKeywords()
+    void SetKeywords(string[] keywords,int enabledIndex)
     {
-        int enabledIndex = (int)settings.directional.filter - 1;
-        for (int i = 0; i < directionalFilterKeywords.Length; i++)
+        for (int i = 0; i < keywords.Length; i++)
         {
             if (i == enabledIndex)
             {
-                buffer.EnableShaderKeyword(directionalFilterKeywords[i]);
+                buffer.EnableShaderKeyword(keywords[i]);
             }
             else
             {
-                buffer.DisableShaderKeyword(directionalFilterKeywords[i]);
+                buffer.DisableShaderKeyword(keywords[i]);
             }
         }
     }
@@ -130,6 +136,7 @@ public class Shadows
         int tileOffset = index * cascadeCount;
         Vector3 ratios = settings.directional.CascadeRatios;
 
+        float cullingFactor = 1f - settings.directional.cascadeFade;
         //为每个级联进行绘制
         for (int i = 0; i < cascadeCount; i++)
         {
@@ -138,6 +145,7 @@ public class Shadows
             cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(
                 light.visibleLightIndex, i, cascadeCount, ratios, tileSize, light.nearPlaneOffset,
                 out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData splitData);
+            splitData.shadowCascadeBlendCullingFactor = 1f;
             shadowSettings.splitData = splitData;
             //因为剔除球都是等效的，所以只需要在循环的第一次计算即可。
             if (index == 0)

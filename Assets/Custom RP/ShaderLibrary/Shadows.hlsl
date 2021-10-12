@@ -41,6 +41,7 @@ struct ShadowData
 {
 	int cascadeIndex;
 	float strength;
+	float cascadeBlend;
 };
 
 float FadedShadowStrength(float distance,float scale,float fade)
@@ -51,6 +52,7 @@ float FadedShadowStrength(float distance,float scale,float fade)
 ShadowData GetShadowData(Surface surfaceWS)
 {
 	ShadowData data;
+	data.cascadeBlend = 1.0;
 	data.strength=FadedShadowStrength(surfaceWS.depth,_ShadowDistanceFade.x,_ShadowDistanceFade.y);
 	int i;
 	for (i=0;i<_CascadeCount;i++)
@@ -71,6 +73,15 @@ ShadowData GetShadowData(Surface surfaceWS)
 	{
 		data.strength=0.0;
 	}
+#if defined(_CASCADE_BLEND_DITHER)
+	else if(data.cascadeBlend < surfaceWS.dither)
+	{
+		i+=1;
+	}
+#endif
+#if !defined(_CASCADE_BLEND_SOFT)
+	data.cascadeBlend=1.0;
+#endif
 	
 	data.cascadeIndex=i;
 	return data;
@@ -104,6 +115,9 @@ float FilterDirectionalShadow (float3 positionSTS)
 //取得采样并且根据strength进行插值
 float GetDirectionalShadowAttenuation(DirectionalShadowData directional,ShadowData global,Surface surfaceWS)
 {
+	#if !defined(_RECEIVE_SHADOWS)
+		return 1.0;
+	#endif
 	if(directional.strength<=0.0)
 	{
 		return 1.0;
